@@ -2,6 +2,9 @@
   "name": "mailbox-fe",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "mailbox-fe": "bin/mailbox-fe.js"
+  },
   "dependencies": {
     "@azure/msal-browser": "^4.25.1",
     "@azure/msal-react": "^3.0.20",
@@ -9,27 +12,40 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "@submanagementgroup/cdk-pipelines-client": "1.9.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.126",
+    "@types/node": "22.7.9",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "aws-cdk-lib": "2.202.0",
     "axios": "^1.13.1",
+    "constructs": "^10.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.4",
     "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
+    "source-map-support": "^0.5.21",
+    "typescript": "~5.6.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:cdk": "tsc -p tsconfig.cdk.json",
+    "watch": "tsc -p tsconfig.cdk.json -w",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "cdk": "cdk",
+    "synth": "npm run build && npm run build:cdk && npx cdk synth",
+    "deploy:dev": "npm run build && npm run build:cdk && npx cdk deploy --all --context target-env=dev",
+    "deploy:prod": "npm run build && npm run build:cdk && npx cdk deploy --all --context target-env=prod"
+  },
+  "devDependencies": {
+    "aws-cdk": "2.1020.2",
+    "ts-node": "^10.9.2"
   },
   "eslintConfig": {
     "extends": [
