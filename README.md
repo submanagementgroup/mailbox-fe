@@ -1,8 +1,54 @@
 # Mailbox FE - Email MFA Platform Frontend
 
 **Status**: 🚧 In Development
+**Repository**: https://github.com/submanagementgroup/mailbox-fe
+**Related**: [mailbox-api](https://github.com/submanagementgroup/mailbox-api) (Backend)
 
-React-based frontend for the Email MFA Platform with Azure Entra External ID authentication.
+React 19 frontend for the Email MFA Platform with Azure Entra External ID authentication and Material-UI.
+
+---
+
+## Technology Stack
+
+- React 19 + TypeScript
+- Material-UI v7
+- Azure MSAL Browser (Entra External ID)
+- React Router DOM v7
+- Axios (API client)
+- AWS CDK (S3 + CloudFront deployment)
+
+---
+
+## Project Structure
+
+```
+mailbox-fe/
+├── bin/
+│   └── mailbox-fe.ts          # CDK pipeline entry point
+├── lib/
+│   └── mailbox-fe-stack.ts    # S3 + CloudFront + Route53
+├── src/                        # React application
+│   ├── components/
+│   ├── pages/
+│   ├── hooks/
+│   ├── lib/
+│   │   ├── msalConfig.ts      # Azure Entra config
+│   │   └── api.ts             # API client
+│   ├── aws-exports.dev.ts     # Dev environment config
+│   ├── aws-exports.prod.ts    # Prod environment config
+│   └── aws-exports.ts         # Current config
+├── public/
+│   ├── smg-logo.png           # SMG branding
+│   └── smg-logo-small.png
+├── package.json                # React + CDK dependencies
+├── tsconfig.json               # React config
+├── tsconfig.cdk.json           # CDK config
+└── cdk.json
+```
+
+---
+
+## Local Development
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
