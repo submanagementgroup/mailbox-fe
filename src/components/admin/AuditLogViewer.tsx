@@ -35,6 +35,7 @@ export function AuditLogViewer() {
 
   useEffect(() => {
     loadAuditLog();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const loadAuditLog = async () => {

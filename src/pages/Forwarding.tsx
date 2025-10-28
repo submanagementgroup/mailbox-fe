@@ -37,6 +37,7 @@ export function Forwarding() {
 
   useEffect(() => {
     loadRules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mailboxId]);
 
   const loadRules = async () => {

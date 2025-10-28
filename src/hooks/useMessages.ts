@@ -44,6 +44,7 @@ export function useMessages(mailboxId: number) {
     if (mailboxId) {
       loadMessages();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mailboxId]);
 
   return {

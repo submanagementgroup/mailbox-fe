@@ -8,7 +8,6 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
-  Chip,
   Button,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';

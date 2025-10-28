@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardActionArea,
-  Grid,
   CircularProgress,
   Alert,
   Chip,
@@ -50,34 +49,42 @@ export function Dashboard() {
       <Typography variant="h4" gutterBottom>
         Your Mailboxes
       </Typography>
-      <Grid container spacing={3}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+          },
+          gap: 3,
+        }}
+      >
         {mailboxes.map((mailbox) => (
-          <Grid item xs={12} sm={6} md={4} key={mailbox.id}>
-            <Card>
-              <CardActionArea onClick={() => navigate(`/mailbox/${mailbox.id}`)}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <EmailIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" component="div">
-                      {mailbox.email_address}
-                    </Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Chip
-                      label={mailbox.is_active ? 'Active' : 'Inactive'}
-                      color={mailbox.is_active ? 'success' : 'default'}
-                      size="small"
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {mailbox.quota_mb} MB
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
+          <Card key={mailbox.id}>
+            <CardActionArea onClick={() => navigate(`/mailbox/${mailbox.id}`)}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <EmailIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6" component="div">
+                    {mailbox.email_address}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Chip
+                    label={mailbox.is_active ? 'Active' : 'Inactive'}
+                    color={mailbox.is_active ? 'success' : 'default'}
+                    size="small"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {mailbox.quota_mb} MB
+                  </Typography>
+                </Box>
+              </CardContent>
+            </CardActionArea>
+          </Card>
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 }

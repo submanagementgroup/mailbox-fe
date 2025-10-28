@@ -28,6 +28,7 @@ export function Message() {
 
   useEffect(() => {
     loadMessage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mailboxId, messageId]);
 
   const loadMessage = async () => {
