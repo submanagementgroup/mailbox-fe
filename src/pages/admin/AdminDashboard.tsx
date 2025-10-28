@@ -1,57 +1,67 @@
-import { Typography, Paper, Box, Grid, Card, CardContent } from '@mui/material';
+import { useState } from 'react';
+import { Typography, Box, Tabs, Tab, Paper } from '@mui/material';
+import { UserManagement } from '../../components/admin/UserManagement';
+import { MailboxManagement } from '../../components/admin/MailboxManagement';
+import { WhitelistManagement } from '../../components/admin/WhitelistManagement';
+import { AuditLogViewer } from '../../components/admin/AuditLogViewer';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div role="tabpanel" hidden={value !== index} {...other}>
+      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 export function AdminDashboard() {
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
         Admin Dashboard
       </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">User Management</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Create and manage users
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Mailbox Management</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Create and assign mailboxes
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Whitelist Management</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Manage sender and recipient whitelists
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Audit Log</Typography>
-              <Typography variant="body2" color="text.secondary">
-                View system audit trail
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="body2" color="text.secondary">
-          Full admin implementation in Commit 11
-        </Typography>
+
+      <Paper>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          variant="fullWidth"
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab label="Users" />
+          <Tab label="Mailboxes" />
+          <Tab label="Whitelist" />
+          <Tab label="Audit Log" />
+        </Tabs>
+
+        <TabPanel value={tabValue} index={0}>
+          <UserManagement />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <MailboxManagement />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
+          <WhitelistManagement />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={3}>
+          <AuditLogViewer />
+        </TabPanel>
       </Paper>
     </Box>
   );
