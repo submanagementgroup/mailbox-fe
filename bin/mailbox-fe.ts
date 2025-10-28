@@ -36,7 +36,7 @@ const devPipeline = new PipelineStack(app, 'dev-mailbox-fe-pipeline', {
     const stack = new MailboxFeStack(context, 'MailboxFe', {
       name: "mailbox-fe-dev",
       env: env,
-      acmCertArn: "arn:aws:acm:us-east-1:484907522964:certificate/TBD", // TODO: Create cert in us-east-1
+      acmCertArn: "arn:aws:acm:us-east-1:484907522964:certificate/5d2fc35d-703a-49e3-849e-de8c537a5f47", // Wildcard: *.dev.submanagementgroup.com
       domainName: "mail.dev.submanagementgroup.com",
     });
     cdk.Tags.of(stack).add('Component', 'mailbox-fe');
@@ -74,7 +74,7 @@ const prodPipeline = new PipelineStack(app, 'prod-mailbox-fe-pipeline', {
     const stack = new MailboxFeStack(context, 'MailboxFe', {
       name: "mailbox-fe-prod",
       env: env,
-      acmCertArn: "arn:aws:acm:us-east-1:794038237156:certificate/TBD", // TODO: Create cert in us-east-1
+      acmCertArn: "arn:aws:acm:us-east-1:794038237156:certificate/PLACEHOLDER-CREATE-WILDCARD-CERT", // TODO: Create wildcard *.submanagementgroup.com in us-east-1
       domainName: "mail.submanagementgroup.com",
     });
     cdk.Tags.of(stack).add('Component', 'mailbox-fe');
