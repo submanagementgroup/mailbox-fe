@@ -21,7 +21,7 @@ const devPipeline = new PipelineStack(app, 'dev-mailbox-fe-pipeline', {
   repo: "mailbox-fe",
   // Build React app before CDK synth
   synthCommands: [
-    'npm ci',
+    'npm install --legacy-peer-deps',  // Mixed React+CDK deps require legacy resolution
     'npm run build',        // Build React app to ./build/
     'npm run build:cdk',    // Build CDK TypeScript
     'npx cdk synth'
@@ -59,7 +59,7 @@ const prodPipeline = new PipelineStack(app, 'prod-mailbox-fe-pipeline', {
   repo: "mailbox-fe",
   // Build React app before CDK synth
   synthCommands: [
-    'npm ci',
+    'npm install --legacy-peer-deps',  // Mixed React+CDK deps require legacy resolution
     'npm run build',        // Build React app to ./build/
     'npm run build:cdk',    // Build CDK TypeScript
     'npx cdk synth'
