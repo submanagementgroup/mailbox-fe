@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { DevLogin } from './DevLogin';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -9,19 +10,27 @@ interface AuthGuardProps {
 
 /**
  * Authentication guard component
- * Redirects to login if not authenticated
+ * In dev mode: Shows DevLogin button for quick bypass
+ * In prod mode: Redirects to Azure Entra login
  * Shows forbidden if user doesn't have required role
  */
 export function AuthGuard({ children, requiredRoles }: AuthGuardProps) {
   const { isAuthenticated, login, roles } = useAuth();
+  const [isDevMode] = useState(process.env.NODE_ENV === 'development');
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isDevMode) {
       login();
     }
-  }, [isAuthenticated, login]);
+  }, [isAuthenticated, isDevMode, login]);
 
   if (!isAuthenticated) {
+    // Dev mode: Show dev login button
+    if (isDevMode) {
+      return <DevLogin />;
+    }
+
+    // Production: Show loading while redirecting to Entra
     return (
       <Box
         display="flex"

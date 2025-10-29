@@ -17,6 +17,19 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add token
 apiClient.interceptors.request.use(
   async (config) => {
+    // Check for dev mode token first (bypasses Azure Entra)
+    const devToken = sessionStorage.getItem('msal.dev-token');
+    if (devToken) {
+      try {
+        const { accessToken } = JSON.parse(devToken);
+        config.headers.Authorization = `Bearer ${accessToken}`;
+        return config;
+      } catch (error) {
+        console.error('Dev token parse error:', error);
+      }
+    }
+
+    // Normal MSAL flow for production
     const accounts = msalInstance.getAllAccounts();
 
     if (accounts.length > 0) {
