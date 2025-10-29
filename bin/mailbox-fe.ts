@@ -7,10 +7,15 @@ import { MailboxFeStack } from '../lib/mailbox-fe-stack';
 
 const app = new cdk.App();
 
-// ============================================
-// DEVELOPMENT PIPELINE
-// ============================================
-const devPipeline = new PipelineStack(app, 'dev-mailbox-fe-pipeline', {
+// Get the target environment from context or environment variables
+const targetEnv = app.node.tryGetContext('target-env') || process.env.TARGET_ENV || 'dev';
+
+// Determine which pipeline to create based on target environment
+if (targetEnv === 'dev' || targetEnv === 'development') {
+  // ============================================
+  // DEVELOPMENT PIPELINE
+  // ============================================
+  const devPipeline = new PipelineStack(app, 'dev-mailbox-fe-pipeline', {
   branch: "develop",
   codeconnectionArn: "arn:aws:codeconnections:ca-central-1:484907522964:connection/64a3746c-a26c-410a-8acc-1741c50813be",
   env: {
@@ -42,13 +47,13 @@ const devPipeline = new PipelineStack(app, 'dev-mailbox-fe-pipeline', {
     cdk.Tags.of(stack).add('Component', 'mailbox-fe');
     cdk.Tags.of(stack).add('Environment', 'Development');
   }
-});
-cdk.Tags.of(devPipeline).add('Component', 'mailbox-fe-pipeline');
-
-// ============================================
-// PRODUCTION PIPELINE
-// ============================================
-const prodPipeline = new PipelineStack(app, 'prod-mailbox-fe-pipeline', {
+  });
+  cdk.Tags.of(devPipeline).add('Component', 'mailbox-fe-pipeline');
+} else if (targetEnv === 'prod' || targetEnv === 'production') {
+  // ============================================
+  // PRODUCTION PIPELINE
+  // ============================================
+  const prodPipeline = new PipelineStack(app, 'prod-mailbox-fe-pipeline', {
   branch: "main",
   codeconnectionArn: "arn:aws:codeconnections:ca-central-1:794038237156:connection/TBD", // TODO: Get prod CodeConnection ARN
   env: {
@@ -80,5 +85,8 @@ const prodPipeline = new PipelineStack(app, 'prod-mailbox-fe-pipeline', {
     cdk.Tags.of(stack).add('Component', 'mailbox-fe');
     cdk.Tags.of(stack).add('Environment', 'Production');
   }
-});
-cdk.Tags.of(prodPipeline).add('Component', 'mailbox-fe-pipeline');
+  });
+  cdk.Tags.of(prodPipeline).add('Component', 'mailbox-fe-pipeline');
+} else {
+  throw new Error(`Unknown target environment: ${targetEnv}. Use 'dev' or 'prod'`);
+}
