@@ -37,3 +37,32 @@ export const msalInstance = new PublicClientApplication(msalConfig);
 export const loginRequest = {
   scopes: awsConfig.entra.scopes,
 };
+
+/**
+ * Check if Azure Entra is actually configured (not using placeholder values)
+ * @returns true if Entra is configured with real credentials, false if using placeholders
+ */
+export function isEntraConfigured(): boolean {
+  const placeholders = [
+    'YOUR_ENTRA_TENANT_ID',
+    'YOUR_ENTRA_CLIENT_ID',
+    'yourcompany.ciamlogin.com',
+    'YOUR_',
+  ];
+
+  // Check if any config value contains placeholder text
+  const hasPlaceholder =
+    placeholders.some(placeholder =>
+      awsConfig.entra.clientId?.includes(placeholder) ||
+      awsConfig.entra.tenantId?.includes(placeholder) ||
+      awsConfig.entra.tenantName?.includes(placeholder)
+    );
+
+  // Also check if values are empty or undefined
+  const hasEmptyValues =
+    !awsConfig.entra.clientId ||
+    !awsConfig.entra.tenantId ||
+    !awsConfig.entra.tenantName;
+
+  return !hasPlaceholder && !hasEmptyValues;
+}

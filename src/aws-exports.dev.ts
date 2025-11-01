@@ -21,6 +21,7 @@ export const awsConfig = {
     name: 'Email MFA Platform',
     environment: 'development',
     domain: 'mail.dev.submanagementgroup.com',
+    mailboxDomain: 'funding.dev.submanagementgroup.com',
   },
 };
 

@@ -17,7 +17,7 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add token
 apiClient.interceptors.request.use(
   async (config) => {
-    // Check for dev mode token first (bypasses Azure Entra)
+    // Priority 1: Check for dev mode token (localhost dev bypass)
     const devToken = sessionStorage.getItem('msal.dev-token');
     if (devToken) {
       try {
@@ -29,7 +29,14 @@ apiClient.interceptors.request.use(
       }
     }
 
-    // Normal MSAL flow for production
+    // Priority 2: Check for local auth token (email/password login)
+    const localToken = sessionStorage.getItem('local-access-token');
+    if (localToken) {
+      config.headers.Authorization = `Bearer ${localToken}`;
+      return config;
+    }
+
+    // Priority 3: Normal MSAL flow for SSO
     const accounts = msalInstance.getAllAccounts();
 
     if (accounts.length > 0) {
@@ -57,8 +64,22 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
-      await msalInstance.loginRedirect(loginRequest);
+      // Token expired or invalid
+      // Clear all auth tokens
+      sessionStorage.removeItem('local-access-token');
+      sessionStorage.removeItem('local-refresh-token');
+      sessionStorage.removeItem('local-user');
+      sessionStorage.removeItem('msal.dev-token');
+      sessionStorage.removeItem('msal.account.dev-account-id');
+
+      // Check if using MSAL (SSO)
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        await msalInstance.loginRedirect(loginRequest);
+      } else {
+        // For local auth, redirect to home (will show login form)
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }
@@ -115,6 +136,9 @@ export const adminApi = {
   createMailbox: (data: { emailAddress: string; quotaMb?: number }) =>
     apiClient.post('/admin/mailboxes', data),
 
+  deleteMailbox: (mailboxId: number) =>
+    apiClient.delete(`/admin/mailboxes/${mailboxId}`),
+
   assignMailbox: (mailboxId: number, userId: string) =>
     apiClient.post(`/admin/mailboxes/${mailboxId}/assign`, { userId }),
 
@@ -126,11 +150,6 @@ export const adminApi = {
 
   removeWhitelistedSender: (domain: string) =>
     apiClient.delete(`/admin/whitelist/senders/${domain}`),
-
-  getWhitelistedRecipients: () => apiClient.get('/admin/whitelist/recipients'),
-
-  addWhitelistedRecipient: (email: string) =>
-    apiClient.post('/admin/whitelist/recipients', { email }),
 
   // Audit Log
   getAuditLog: (params?: any) => apiClient.get('/admin/audit-log', { params }),

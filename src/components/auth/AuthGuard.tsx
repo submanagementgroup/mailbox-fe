@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { DevLogin } from './DevLogin';
+import { LocalLogin } from './LocalLogin';
+import { isEntraConfigured } from '../../lib/msalConfig';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,27 +12,38 @@ interface AuthGuardProps {
 
 /**
  * Authentication guard component
- * In dev mode: Shows DevLogin button for quick bypass
- * In prod mode: Redirects to Azure Entra login
+ * - Dev mode (localhost): Shows DevLogin button for quick bypass
+ * - Azure not configured: Shows LocalLogin (email/password)
+ * - Azure configured: Redirects to SSO
  * Shows forbidden if user doesn't have required role
  */
 export function AuthGuard({ children, requiredRoles }: AuthGuardProps) {
   const { isAuthenticated, login, roles } = useAuth();
   const [isDevMode] = useState(process.env.NODE_ENV === 'development');
+  const [entraConfigured] = useState(isEntraConfigured());
 
   useEffect(() => {
-    if (!isAuthenticated && !isDevMode) {
+    // Only auto-redirect to SSO if:
+    // 1. Not authenticated
+    // 2. Not in dev mode (localhost)
+    // 3. Azure Entra is actually configured
+    if (!isAuthenticated && !isDevMode && entraConfigured) {
       login();
     }
-  }, [isAuthenticated, isDevMode, login]);
+  }, [isAuthenticated, isDevMode, entraConfigured, login]);
 
   if (!isAuthenticated) {
-    // Dev mode: Show dev login button
+    // Dev mode: Show dev login button (localhost only)
     if (isDevMode) {
       return <DevLogin />;
     }
 
-    // Production: Show loading while redirecting to Entra
+    // Azure Entra not configured: Show local email/password login
+    if (!entraConfigured) {
+      return <LocalLogin />;
+    }
+
+    // Azure Entra configured: Show loading while redirecting to SSO
     return (
       <Box
         display="flex"
@@ -41,7 +54,7 @@ export function AuthGuard({ children, requiredRoles }: AuthGuardProps) {
       >
         <CircularProgress size={60} />
         <Typography variant="body1" sx={{ mt: 2 }}>
-          Redirecting to login...
+          Redirecting to SSO login...
         </Typography>
       </Box>
     );

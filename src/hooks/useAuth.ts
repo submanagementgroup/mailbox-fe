@@ -12,6 +12,10 @@ export function useAuth() {
   const devToken = sessionStorage.getItem('msal.dev-token');
   const devAccount = sessionStorage.getItem('msal.account.dev-account-id');
 
+  // Check for local login (email/password) authentication
+  const localToken = sessionStorage.getItem('local-access-token');
+  const localUser = sessionStorage.getItem('local-user');
+
   let user = accounts[0];
   let roles: string[] = [];
 
@@ -20,6 +24,21 @@ export function useAuth() {
     const mockAccount = JSON.parse(devAccount);
     user = mockAccount;
     roles = mockAccount.idTokenClaims?.roles || ['SYSTEM_ADMIN'];
+    isAuthenticated = true;
+  } else if (localToken && localUser) {
+    // Local auth: Use stored user from login response
+    const userData = JSON.parse(localUser);
+    user = {
+      username: userData.email,
+      name: userData.name,
+      localAccountId: userData.id?.toString(),
+      idTokenClaims: {
+        email: userData.email,
+        name: userData.name,
+        roles: [userData.role], // Single role from backend
+      },
+    } as any;
+    roles = [userData.role];
     isAuthenticated = true;
   } else {
     // Normal MSAL flow
@@ -31,15 +50,23 @@ export function useAuth() {
   };
 
   const logout = () => {
-    // Clear dev mode tokens if present
+    // Clear all auth tokens
     sessionStorage.removeItem('msal.dev-token');
     sessionStorage.removeItem('msal.account.dev-account-id');
     sessionStorage.removeItem('msal.token.keys');
+    sessionStorage.removeItem('local-access-token');
+    sessionStorage.removeItem('local-refresh-token');
+    sessionStorage.removeItem('local-user');
 
-    // Normal MSAL logout
-    instance.logoutRedirect({
-      postLogoutRedirectUri: window.location.origin,
-    });
+    // If using MSAL, logout via MSAL
+    if (accounts.length > 0) {
+      instance.logoutRedirect({
+        postLogoutRedirectUri: window.location.origin,
+      });
+    } else {
+      // For local auth, just reload the page
+      window.location.href = '/';
+    }
   };
 
   const isAdmin = roles.includes('SYSTEM_ADMIN');

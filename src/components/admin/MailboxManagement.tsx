@@ -15,14 +15,21 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  IconButton,
+  DialogContentText,
+  LinearProgress,
+  Typography,
 } from '@mui/material';
 import { adminApi } from '../../lib/api';
+import awsConfig from '../../aws-exports';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface Mailbox {
   id: number;
   email_address: string;
   quota_mb: number;
+  used_mb: number;
   is_active: boolean;
 }
 
@@ -31,10 +38,14 @@ export function MailboxManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [mailboxToDelete, setMailboxToDelete] = useState<Mailbox | null>(null);
   const [formData, setFormData] = useState({
-    emailAddress: '',
-    quotaMb: 5120,
+    username: '',
   });
+
+  const mailboxDomain = awsConfig.app.mailboxDomain || 'funding.dev.submanagementgroup.com';
+  const QUOTA_MB = 20480; // 20GB - fixed for all mailboxes
 
   useEffect(() => {
     loadMailboxes();
@@ -54,13 +65,37 @@ export function MailboxManagement() {
 
   const handleCreate = async () => {
     try {
-      await adminApi.createMailbox(formData);
+      const emailAddress = `${formData.username}@${mailboxDomain}`;
+      await adminApi.createMailbox({ emailAddress, quotaMb: QUOTA_MB });
       setDialogOpen(false);
-      setFormData({ emailAddress: '', quotaMb: 5120 });
+      setFormData({ username: '' });
       loadMailboxes();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to create mailbox');
     }
+  };
+
+  const handleDeleteClick = (mailbox: Mailbox) => {
+    setMailboxToDelete(mailbox);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!mailboxToDelete) return;
+
+    try {
+      await adminApi.deleteMailbox(mailboxToDelete.id);
+      setDeleteDialogOpen(false);
+      setMailboxToDelete(null);
+      loadMailboxes();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete mailbox');
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setMailboxToDelete(null);
   };
 
   if (loading) {
@@ -90,24 +125,60 @@ export function MailboxManagement() {
         <TableHead>
           <TableRow>
             <TableCell>Email Address</TableCell>
-            <TableCell>Quota (MB)</TableCell>
+            <TableCell width="300">Usage</TableCell>
             <TableCell>Status</TableCell>
+            <TableCell align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {mailboxes.map((mailbox) => (
-            <TableRow key={mailbox.id}>
-              <TableCell>{mailbox.email_address}</TableCell>
-              <TableCell>{mailbox.quota_mb}</TableCell>
-              <TableCell>
-                <Chip
-                  label={mailbox.is_active ? 'Active' : 'Inactive'}
-                  color={mailbox.is_active ? 'success' : 'default'}
-                  size="small"
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+          {mailboxes.map((mailbox) => {
+            const usedMb = mailbox.used_mb || 0;
+            const quotaMb = mailbox.quota_mb;
+            const usagePercent = (usedMb / quotaMb) * 100;
+            const usedGb = (usedMb / 1024).toFixed(2);
+            const quotaGb = (quotaMb / 1024).toFixed(0);
+
+            return (
+              <TableRow key={mailbox.id}>
+                <TableCell>{mailbox.email_address}</TableCell>
+                <TableCell>
+                  <Box>
+                    <Box display="flex" justifyContent="space-between" mb={0.5}>
+                      <Typography variant="body2" color="text.secondary">
+                        {usedGb} GB / {quotaGb} GB
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {usagePercent.toFixed(1)}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Math.min(usagePercent, 100)}
+                      color={usagePercent > 90 ? 'error' : usagePercent > 75 ? 'warning' : 'primary'}
+                      sx={{ height: 8, borderRadius: 1 }}
+                    />
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={mailbox.is_active ? 'Active' : 'Inactive'}
+                    color={mailbox.is_active ? 'success' : 'default'}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    onClick={() => handleDeleteClick(mailbox)}
+                    color="error"
+                    size="small"
+                    aria-label="delete mailbox"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
@@ -116,20 +187,17 @@ export function MailboxManagement() {
         <DialogContent>
           <Box display="flex" flexDirection="column" gap={2} mt={1}>
             <TextField
-              label="Email Address"
-              type="email"
-              value={formData.emailAddress}
-              onChange={(e) => setFormData({ ...formData, emailAddress: e.target.value })}
+              label="Mailbox Username"
+              value={formData.username}
+              onChange={(e) => setFormData({ username: e.target.value })}
               fullWidth
               required
+              helperText={`Full address: ${formData.username || 'username'}@${mailboxDomain}`}
+              placeholder="client1"
             />
-            <TextField
-              label="Quota (MB)"
-              type="number"
-              value={formData.quotaMb}
-              onChange={(e) => setFormData({ ...formData, quotaMb: parseInt(e.target.value) })}
-              fullWidth
-            />
+            <Typography variant="body2" color="text.secondary">
+              Quota: 20 GB (standard for all mailboxes)
+            </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -137,9 +205,37 @@ export function MailboxManagement() {
           <Button
             onClick={handleCreate}
             variant="contained"
-            disabled={!formData.emailAddress}
+            disabled={!formData.username}
           >
             Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Delete Mailbox</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the mailbox{' '}
+            <strong>{mailboxToDelete?.email_address}</strong>?
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 2, color: 'error.main', fontWeight: 'bold' }}>
+            ⚠️ Warning: This will permanently delete all emails for this client and cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
